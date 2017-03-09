@@ -20,10 +20,6 @@ public class CentralCloud {
         return location;
     }
 
-    public int getId() {
-        return id;
-    }
-
     public CentralCloud(int id, Node location, Topology tp){
         this.id = id;
         this.location = location;

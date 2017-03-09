@@ -19,6 +19,7 @@ public class CentralController {
     private Collection<Node> userLocations = new LinkedList<>();
     private LinkedList<User> users = new LinkedList<>();
     private HashMap<User, Node> globalOptimal = new HashMap<>();
+    public HashMap<User, MarkovInterface> interfaceMap = new HashMap<>();
 
     private double gamma;
 
@@ -39,9 +40,7 @@ public class CentralController {
         this.edgeCloudLocations.add(edgeCloud.getLocation());
     }
 
-
     //public void getEdgeInfo(String edgeName, String serviceName, EdgeCloud.EdgeInfo edgeInfo){}
-
     public Node getRequest(User user, Request request){
         switch (request){
             case INITSERVICE:
@@ -59,6 +58,14 @@ public class CentralController {
     }
 
     private Node request_initConnect(User user){
+        MarkovCostLocal markovCost = new MarkovCostLocal.Builder(this.topology).set_a(1).set_b(0.5).set_c(1).set_d(1).set_e(1).build();
+        //init markov interface that comprises all actions & states.
+        MarkovInterface markovInterface = new MarkovInterfaceLocal(user, edgeCloudLocations, topology);
+        //start to calculate MDP.
+        new MarkovProcess.Builder(markovInterface, markovCost).gamma(this.gamma).epsilon(1e-2).build();
+        //return the optimal edge server.
+        this.interfaceMap.put(user,markovInterface);
+
         return computeNearestEdgeServer(user.getCurrentLocation());
     }
 
@@ -86,23 +93,11 @@ public class CentralController {
         this.users.add(user);
     }
 
-    private static long total = 0;
-    private static int count = 0;
     private Node computeMDPOptimalEdgeServer(User user){
-
-        MarkovCostLocal markovCost = new MarkovCostLocal(this.topology, 1, 0.5, 1, 1, 1);
-
-        //init markov interface that comprises all actions & states.
-        MarkovInterface markovInterface = new MarkovInterfaceLocal(user, edgeCloudLocations, topology);
-
-        //start to calculate MDP.
-
-        MarkovProcess mdp = new MarkovProcess(markovInterface, markovCost, this.gamma, 1e-2);
-        //return the optimal edge server.
-        Node n =  ((MarkovActionLocal)mdp.getOptimalAction(new MarkovStateLocal(user, user.getCurrentLocation(),user.getEdgeCloudLocation(), user.getCentralCloudLocation()))).getNewServerLocation();
-        System.out.println("location " + user.getCurrentLocation() + " server " + user.getEdgeCloudLocation() + " optimal server" + n);
-        return n;
+        MarkovState userState = new MarkovStateLocal(user, user.getCurrentLocation(), user.getEdgeCloudLocation(), user.getCentralCloudLocation());
+        return ((MarkovActionLocal)this.interfaceMap.get(user).findOptimalAction(userState)).getNewServerLocation();
     }
+
 
     public void computeGlobalOptimalEdgeServer(){
         MarkovCost markovCost = new MarkovCostGlobal(topology, 1, 1, 1, 1, 1);
@@ -118,14 +113,16 @@ public class CentralController {
         };
         MarkovInterfaceGlobal markovInterface = new MarkovInterfaceGlobal(users, edgeCloudLocations, filter);
         System.out.println("Prepare Interface done!");
-        MarkovProcess mdp = new MarkovProcess(markovInterface, markovCost, this.gamma, 1e-2);
-        mdp.queryState = markovInterface.getCurrentGlobalState();
+        //MarkovProcess mdp = new MarkovProcess(markovInterface, markovCost, this.gamma, 1e-2);
+        //mdp.queryState = markovInterface.getCurrentGlobalState();
         //mdp.valueIteration();
         System.out.println("MDP calculation done!");
+        /*
         MarkovActionGlobal action = (MarkovActionGlobal)mdp.getOptimalAction(markovInterface.getCurrentGlobalState());
         for(Map.Entry<User, MarkovActionLocal> entry : action.getLocalActions().entrySet()){
             globalOptimal.put(entry.getKey(), entry.getValue().getNewServerLocation());
         }
+        */
         users.clear();
     }
 

@@ -43,7 +43,6 @@ public class EdgeCloud {
         return this.gameWorldList.containsKey(gameWorldId);
     }
 
-
     /*
 
     public void updateEdgeInfo_totalUser(String name, int totalUsere) {
@@ -102,6 +101,7 @@ public class EdgeCloud {
             this.users.add(user);
         }
 
+        /*
         int gameId = user.getGameWorldId();
         if (gameWorldList.containsKey(gameId)) {
             int updateGameIdCount = gameWorldList.get(gameId) + 1;
@@ -109,6 +109,7 @@ public class EdgeCloud {
         }else{
             gameWorldList.put(gameId, 1);
         }
+        */
     }
 
     /*
@@ -123,6 +124,7 @@ public class EdgeCloud {
             this.users.remove(user);
         }
 
+        /*
         int gameId = user.getGameWorldId();
         int count = gameWorldList.get(gameId);
         if(count > 1){
@@ -131,6 +133,7 @@ public class EdgeCloud {
         }else if( count == 1){
             gameWorldList.remove(gameId);
         }
+        */
     }
 
     private void request_service(User user) {
@@ -143,14 +146,34 @@ public class EdgeCloud {
         if (!this.reserveUsers.contains(user)) {
             this.reserveUsers.add(user);
         }
+
+        int gameId = user.getGameWorldId();
+        if (gameWorldList.containsKey(gameId)) {
+            int updateGameIdCount = gameWorldList.get(gameId) + 1;
+            gameWorldList.put(gameId, updateGameIdCount);
+        }else{
+            gameWorldList.put(gameId, 1);
+        }
     }
 
     private void request_reserveC(User user) {
-        this.totalReserve--;
+
+        if(totalReserve>0)
+            this.totalReserve--;
 
         if(this.reserveUsers.contains(user)){
             this.reserveUsers.remove(user);
         }
+
+        int gameId = user.getGameWorldId();
+        int count = gameWorldList.get(gameId);
+        if(count > 1){
+            int updateGameIdCount = gameWorldList.get(gameId) - 1;
+            gameWorldList.put(gameId, updateGameIdCount);
+        }else if( count == 1){
+            gameWorldList.remove(gameId);
+        }
+
     }
 
     public static void main(String[] args) {

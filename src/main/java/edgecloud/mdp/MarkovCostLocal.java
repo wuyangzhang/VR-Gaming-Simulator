@@ -1,28 +1,87 @@
 package edgecloud.mdp;
 
+import edgecloud.EdgeCloud;
 import topology.Node;
 import topology.Topology;
+
+import java.util.Map;
 
 /**
  * Created by Wuyang on 12/1/16.
  */
 public final class MarkovCostLocal extends MarkovCost {
 
-    public MarkovCostLocal(Topology tp, double a, double b, double c, double d, double e) {
-        this.tp = tp;
-        this.a = a;
-        this.b = b;
-        this.c = c;
-        this.d = d;
-        this.e = e;
+    private final int sharingValue = 100;
+
+
+    public MarkovCostLocal(Builder builder){
+        this.a = builder.a;
+        this.b = builder.b;
+        this.c = builder.c;
+        this.d = builder.d;
+        this.e = builder.e;
+        this.edgeCloudMap = builder.edgeCloudMap;
+        this.tp = builder.tp;
     }
+
+    public static class Builder{
+        private double a;
+        private double b;
+        private double c;
+        private double d;
+        private double e;
+        private Map<Node, EdgeCloud> edgeCloudMap;
+        private Topology tp;
+
+        public Builder(Topology tp){
+            this.tp = tp;
+        }
+
+        public Builder set_a(double a){
+            this.a = a;
+            return this;
+        }
+
+        public Builder set_b(double b){
+            this.b = b;
+            return this;
+        }
+
+        public Builder set_c(double c){
+            this.c = c;
+            return this;
+        }
+
+        public Builder set_d(double d){
+            this.d = d;
+            return this;
+        }
+
+        public Builder set_e(double e){
+            this.e = e;
+            return this;
+        }
+
+        public Builder set_e(Map<Node, EdgeCloud> edgeCloudMap){
+            this.edgeCloudMap = edgeCloudMap;
+            return this;
+        }
+
+        public MarkovCostLocal build(){
+            return new MarkovCostLocal(this);
+        }
+
+
+    }
+
 
     @Override
     public double calculateReward(MarkovState preState, MarkovAction action, MarkovState transitState) {
         //double responsePlus = a * (computeResponseTime(preState) - computeResponseTime(transitState));
         double responsePlus = a * computeResponseTime(preState, transitState);
-        double migrationCost = b * computeMigrationCost(preState, transitState);
-        return responsePlus - migrationCost;
+        //double migrationCost = b * computeMigrationCost(preState, transitState);
+        //return responsePlus - migrationCost;
+        return responsePlus;
     }
 
     /*
@@ -44,26 +103,29 @@ public final class MarkovCostLocal extends MarkovCost {
     }
 
     private double computeMigrationCost(MarkovState preState, MarkovState transitState) {
-        //check whether destination edge cloud has required game world
-        //int requiredGWId = ((MarkovStateLocal) preState).getUser().getGameWorldId();
-// TODO: add it back when edgeclouds logic is correct
-//        if(edgeClouods.get(((MarkovStateLocal) transitState).getEdgeCloudLocation()).gameWorldList.containsKey(requiredGWId)){
-//            return 0;
-//        }
+
+        double GWSharingPlus = 0;
+        int currGWId = ((MarkovStateLocal) preState).getUser().getGameWorldId();
+
+        if(edgeCloudMap.get(((MarkovStateLocal) transitState).getEdgeCloudLocation()).gameWorldList.containsKey(currGWId)){
+            GWSharingPlus = sharingValue * edgeCloudMap.get(((MarkovStateLocal) transitState).getEdgeCloudLocation()).gameWorldList.get(currGWId);
+        }
 
         Node preEdgeLocation = ((MarkovStateLocal) preState).getEdgeCloudLocation();
         Node transitEdgeLocation = ((MarkovStateLocal) transitState).getEdgeCloudLocation();
         double cost = tp.getRouteCost().get(preEdgeLocation).get(transitEdgeLocation);
-        //return cost;
+        return cost - GWSharingPlus;
 
+        //return cost;
+        /*
         if (cost == 0) {
             return 0;
         } else {
-            return 0 + cost;
+            return 5 + cost;
         }
+        */
 
     }
-
 
     private double computeDownTime(MarkovState preState) {
         return 0.0;

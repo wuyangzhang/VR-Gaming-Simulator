@@ -43,12 +43,62 @@ public class User {
 
     }
 
-    public User(int name, Trace trace, Router router) {
-        this.name = name;
-        this.trace = trace;
-        this.router = router;
-        this.centralCloudLocation = router.getCentralCloud().getLocation();
-        this.currentLocation = trace.getCurrent();
+    public User(Builder builder) {
+        this.name = builder.name;
+        this.trace = builder.trace;
+        this.router = builder.router;
+        this.currentLocation = builder.currentLocation;
+        this.centralCloudLocation = builder.centralCloudLocation;
+        this.reserveEdgeCloud = builder.reserveEdgeCloud;
+        this.gameWorldId = builder.gameWorldId;
+    }
+
+    public static class Builder{
+        private int name;
+        private Trace trace;
+        private Node currentLocation;
+        private Node edgeCloudLocation;
+        private Node centralCloudLocation;
+        private Node reserveEdgeCloud;
+        private Router router;
+        private int gameWorldId;
+
+        public Builder(int name, Trace trace, Router router){
+            this.name = name;
+            this.trace = trace;
+            this.router = router;
+            this.centralCloudLocation = router.getCentralCloud().getLocation();
+            this.currentLocation = trace.getCurrent();
+        }
+
+        public Builder currentLocation(Node currentLocation){
+            this.currentLocation = currentLocation;
+            return this;
+        }
+
+        public Builder edgeCloudLocation(Node edgeCloudLocation){
+            this.edgeCloudLocation = edgeCloudLocation;
+            return this;
+        }
+
+        public Builder centralCloudLocation(Node centralCloudLocation){
+            this.centralCloudLocation = centralCloudLocation;
+            return this;
+        }
+
+        public Builder reserveEdgeCloud(Node reserveEdgeCloud){
+            this.reserveEdgeCloud = reserveEdgeCloud;
+            return this;
+        }
+
+        public Builder gameWorldId(int gameWorldId){
+            this.gameWorldId = gameWorldId;
+            return this;
+        }
+
+        public User build(){
+            return new User(this);
+        }
     }
 
     public int getName() {
@@ -122,7 +172,7 @@ public class User {
     }
 
     public Node moveToNextStep() {
-        return this.currentLocation = this.trace.moveToNextStep();
+        return this.currentLocation = this.trace.moveToNextStep(currentLocation);
     }
 
     public Object sendServiceRequest(Node edgeCloudLocation, Request request) {

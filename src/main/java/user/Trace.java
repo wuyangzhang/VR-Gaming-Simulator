@@ -19,5 +19,7 @@ public abstract class Trace {
 
     public abstract Node moveToNextStep();
 
+    public abstract  Node moveToNextStep(Node currLocation);
+
     public abstract Map<Node, Map<Link, Double>> getTransitionProbability();
 }

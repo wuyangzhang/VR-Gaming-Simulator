@@ -5,10 +5,9 @@
  */
 package edgecloud.mdp;
 
-import topology.Node;
+import user.User;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author ubuntu
@@ -35,24 +34,52 @@ public class MarkovProcess {
 
     private Map<MarkovState, Map<MarkovAction,Map<MarkovState, StateParameter>>> stateParaMap = new HashMap<>();
 
+    public static class Builder{
+        private Collection<MarkovState> allPossibleStates;
+        private Collection<MarkovAction> allPossibleActions;
+        private MarkovCost costFunction;
+        private double gamma;
+        private double epsilon;
 
-    public MarkovProcess(MarkovInterface markovInterface, MarkovCost costFunction, double gamma, double epsilon) {
-        //store all states & all actions
-        this.allPossibleStates = markovInterface.allPossibleStates;
-        this.allPossibleActions = markovInterface.allPossibleActions;
-        this.costFunction = costFunction;
+        public Builder(MarkovInterface markovInterface, MarkovCost costFunction){
+            this.allPossibleStates = markovInterface.allPossibleStates;
+            this.allPossibleActions = markovInterface.allPossibleActions;
+            this.costFunction = costFunction;
+        }
+
+        public Builder gamma(double gamma){
+            this.gamma = gamma;
+            return this;
+        }
+
+        public Builder epsilon(double epsilon){
+            this.epsilon = epsilon;
+            return this;
+        }
+
+        public MarkovProcess build(){
+            return new MarkovProcess(this);
+        }
+    }
+
+    public MarkovProcess(Builder builder){
+        this.allPossibleStates = builder.allPossibleStates;
+        this.allPossibleActions = builder.allPossibleActions;
+        this.costFunction = builder.costFunction;
 
         //init the utility for all states
         for (MarkovState state : this.allPossibleStates) {
             this.utilityMap.put(state, 0.0);
         }
 
-        this.gamma = gamma;
-        threshold = gamma == 1 ? epsilon : (epsilon * (1 - gamma) / gamma);
+        this.gamma = builder.gamma;
+        threshold = gamma == 1 ? builder.epsilon : (builder.epsilon * (1 - gamma) / gamma);
+
 
         this.init();
         this.valueIteration();
     }
+
 
     /*
         avoid the duplicated computation of finding transit states & calculating reward
@@ -90,18 +117,13 @@ public class MarkovProcess {
                 double maxUtility = Double.NEGATIVE_INFINITY;
                 double currUtility = utilityMap.get(state);
                 //loop all actions to find the optimal action that take the max utility for this state
-                for(MarkovAction action : allPossibleActions){
+
+                //try this version in the global optimization
+
+                /*
+                HashMap<MarkovAction, Double>maxU = new HashMap<>();
+                allPossibleActions.parallelStream().forEach((action) -> {
                     double nextUtil = 0;
-                    //loop all finally transit states of this state based on this action
-                    /*
-                    Map<MarkovState,Double> transitStates = action.getActionResults(state);
-                    for (Map.Entry<MarkovState, Double> entry : transitStates.entrySet()) {
-                        MarkovState reState = entry.getKey();
-                        double pr = entry.getValue();
-                        double reward = costFunction.calculateReward(state, action, reState);
-                        nextUtil += pr * (reward + gamma * utilityMap.get(reState));
-                    }
-                    */
 
                     for(Map.Entry<MarkovState, StateParameter> entry : this.stateParaMap.get(state).get(action).entrySet()){
                         MarkovState reState = entry.getKey();
@@ -111,6 +133,28 @@ public class MarkovProcess {
                         nextUtil += pr * (reward + gamma * utilityMap.get(reState));
                     }
 
+                    maxU.put(action, nextUtil);
+
+                });
+                for(Map.Entry<MarkovAction, Double> entry: maxU.entrySet()){
+                    if(entry.getValue() > maxUtility){
+                        maxUtility = entry.getValue();
+                        state.setTempUtility(maxUtility);
+                        state.setOptimalAction(entry.getKey());
+                    }
+                }
+                */
+
+                for(MarkovAction action : allPossibleActions){
+                    double nextUtil = 0;
+                    //loop all finally transit states of this state based on this action
+                    for(Map.Entry<MarkovState, StateParameter> entry : this.stateParaMap.get(state).get(action).entrySet()){
+                        MarkovState reState = entry.getKey();
+                        StateParameter sp = entry.getValue();
+                        double pr = sp.pr;
+                        double reward = sp.reward;
+                        nextUtil += pr * (reward + gamma * utilityMap.get(reState));
+                    }
 
                     if(nextUtil > maxUtility){
                         maxUtility = nextUtil;
@@ -118,6 +162,7 @@ public class MarkovProcess {
                         state.setOptimalAction(action);
                     }
                 }
+
                 double currDiff = Math.abs(maxUtility - currUtility);
                 if(currDiff > maxDiff){
                     maxDiff = currDiff;
@@ -128,9 +173,9 @@ public class MarkovProcess {
                 utilityMap.put(state, state.getTempUtility());
             }
         }while(maxDiff > threshold);
-        System.out.println(String.format("total round%d", round));
+        //System.out.println(String.format("total round%d", round));
     }
-
+    /*
     public MarkovAction getOptimalAction(MarkovState state) {
         for(MarkovState state1 : allPossibleStates) {
             if (state1.equals(state)) {
@@ -139,7 +184,7 @@ public class MarkovProcess {
         }
         throw new IllegalArgumentException("Invalid State");
     }
-
+    */
     /*
     public void setUtility(MarkovState state, double utility){
         state.utility = utility;

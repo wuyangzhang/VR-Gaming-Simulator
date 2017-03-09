@@ -26,9 +26,13 @@ public final class MarkovInterfaceLocal extends MarkovInterface {
     public MarkovInterfaceLocal(User user, Collection<Node> edgeClouds, Topology tp){
         this.tp = tp;
         for(Node edgeLocation : edgeClouds){
+            /*
             if(actionFilter(user, edgeLocation, 2)){
                 allPossibleActions.add(new MarkovActionLocal(edgeLocation));
             }
+            */
+
+            allPossibleActions.add(new MarkovActionLocal(edgeLocation));
             //@para user.getTrace().getTransitionProbability().keySet(), all locations a user can be in
             for(Node userLocation : user.getTrace().getTransitionProbability().keySet()){
                 allPossibleStates.add(new MarkovStateLocal(user, userLocation, edgeLocation, user.getCentralCloudLocation()));

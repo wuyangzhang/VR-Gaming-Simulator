@@ -23,6 +23,7 @@ public class RandomTrace extends Trace {
     private final Topology topology;
     private final Map<Node, Map<Link, Double>> transitionProbability;
     private Node current;
+    private Node next;
 
     public RandomTrace(Topology topology, Node current, Map<Node, Map<Link, Double>> transitionProbability) {
         this.topology = topology;
@@ -62,6 +63,23 @@ public class RandomTrace extends Trace {
             }
         }
         return current;
+    }
+
+    @Override
+    public Node moveToNextStep(Node currLocation){
+
+        Map<Link, Double> probability = transitionProbability.get(currLocation);
+        double val = DEFAULT_RANDOM.nextDouble();
+        for (Map.Entry<Link, Double> entry : probability.entrySet()) {
+            Link key = entry.getKey();
+            Double value = entry.getValue();
+            val -= value;
+            if (val < 0) {
+                next = key.getnTo();
+                break;
+            }
+        }
+        return next;
     }
 
     public Map<Link, Double> getPossibleNextSteps() {
