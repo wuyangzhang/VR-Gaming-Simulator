@@ -1,12 +1,11 @@
 package edgecloud;
 
-import edgecloud.mdp.*;
+import mdp.*;
 import topology.Node;
 import topology.Topology;
 import user.User;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Wuyang on 12/2/16.

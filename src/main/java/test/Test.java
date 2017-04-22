@@ -19,7 +19,7 @@ public class Test {
         /*
             init topology
          */
-        final int x = 5;
+        final int x = 41;
         final int y = (x - 1) / 2;
         Topology tp = Topology.getMByNMatrix(x, x);
         tp.calAllNodesDistance();
@@ -81,17 +81,17 @@ public class Test {
             Node initServer = (Node)u.sendServiceRequest(null, request);
             u.setReserveEdgeCloud(initServer);
         }
-
-        for(int stepCount = 0; stepCount < 20; stepCount++){
+        /*
+        for(int stepCount = 0; stepCount < 40; stepCount++){
             //time slot starts: all users connect to new server & get service
-            System.out.printf("[TEST]*****************************Round %d*******************************%n", stepCount);
+            //System.out.printf("[TEST]*****************************Round %d*******************************%n", stepCount);
             for(User u : userList) {
                 //connect to the server and get service
                 request = User.Request.CONNECT;
                 u.setEdgeCloudLocation(u.getReserveEdgeCloud());
                 u.sendServiceRequest(u.getEdgeCloudLocation(), request);
                 //System.out.printf("[TEST] round %d: user %d connects to %s%n%n", stepCount, u.getName(), u.getEdgeCloudLocation());
-                System.out.printf("[TEST] user %d location %s, connects to %s%n%n", u.getName(), u.getCurrentLocation(), u.getEdgeCloudLocation());
+                //System.out.printf("[TEST] user %d location %s, connects to %s%n%n", u.getName(), u.getCurrentLocation(), u.getEdgeCloudLocation());
 
                 request = User.Request.GETSERVICE;
                 u.sendServiceRequest(u.getEdgeCloudLocation(), request);
@@ -102,6 +102,7 @@ public class Test {
                 //reserve on a migrate server
                 request = User.Request.GETOPTIMALSERVER;
                 Node migrateServer = (Node) u.sendServiceRequest(u.getEdgeCloudLocation(), request);
+                //System.out.println("current server: " + u.getEdgeCloudLocation() + "migrate server: " + migrateServer);
                 u.setReserveEdgeCloud(migrateServer);
 
                 request = User.Request.RESERVE;
@@ -119,10 +120,8 @@ public class Test {
                 u.sendServiceRequest(u.getReserveEdgeCloud(), request);
 
             }
-
-
-
         }
+        */
     }
 
 }
